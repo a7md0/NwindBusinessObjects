@@ -46,6 +46,8 @@
     <Compile Include="Builder\WhereClause.cs" />
     <Compile Include="DataListJoin.cs" />
     <Compile Include="ItemJoin.cs" />
+    <Compile Include="OrderDetail.cs" />
+    <Compile Include="OrderDetailList.cs" />
     <Compile Include="OrderList.cs" />
     <Compile Include="Order.cs" />
     <Compile Include="Employee.cs" />
