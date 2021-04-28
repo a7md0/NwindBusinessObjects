@@ -111,7 +111,7 @@ namespace NwindBusinessObjects {
             this.connection.Close();
         }
 
-        public void PopulateWithFilter(string field, string value) {
+        public void PopulateWithFilter(string field, object value) {
             this.connection.Open();
 
             using (var command = this.connection.CreateCommand()) {
