@@ -10,7 +10,7 @@ namespace NwindBusinessObjects {
         private int productID;  // null-able:	NO
         private decimal unitPrice;    // null-able:	NO
         private short quantity;  // null-able:	NO
-        private double discount;	// null-able:	NO
+        private float discount;	// null-able:	NO
 
         public OrderDetail(int orderID, int productID) : base(orderID.ToString(), productID.ToString()) {
             this.orderID = orderID;
@@ -61,7 +61,7 @@ namespace NwindBusinessObjects {
             }
         }
 
-        public double Discount {
+        public float Discount {
             get {
                 return this.discount;
             }
