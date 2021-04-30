@@ -175,10 +175,10 @@ namespace NwindBusinessObjects {
                     command.Parameters.AddRange(insert.Parameters);
                     command.CommandText = $"INSERT INTO [{this.table}] ({insertFields}) OUTPUT INSERTED.{this.pkColumn} VALUES ({insertValues});";
 
+                    this.connection.Open();
+
                     try {
-                        this.connection.Open();
                         object inserted_id = command.ExecuteScalar();
-                        this.connection.Close();
 
                         pkColumnProperty.SetValue(item, inserted_id);
 
@@ -188,6 +188,8 @@ namespace NwindBusinessObjects {
                         item.Valid = false;
                         item.ErrorMessage = ex.Message;
                     }
+
+                    this.connection.Close();
                 }
             }
         }
