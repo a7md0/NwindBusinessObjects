@@ -130,29 +130,34 @@ namespace NwindBusinessObjects {
         }
 
         public virtual void Update(T item) {
-            this.connection.Open();
-
             using (var command = this.connection.CreateCommand())
             using (var set = new SetClause(this.schema)) {
                 set.Add(item, itemProperties, new[] { this.pkColumn });
 
                 if (set.HasAny) {
-                    string setClause = set.ToString();
-                    var whereClause = this.whereItemClause(command, item);
-
-                    command.Parameters.AddRange(set.Parameters);
-                    command.CommandText = $"UPDATE [{this.table}] {setClause} {whereClause};";
-
-                    try {
-                        command.ExecuteNonQuery();
-
-                        item.Valid = true;
-                        item.ErrorMessage = null;
-                    } catch (SqlException ex) {
-                        item.Valid = false;
-                        item.ErrorMessage = ex.Message;
-                    }
+                    this.Update(item, command, set);
                 }
+            }
+        }
+
+        protected void Update(T item, SqlCommand command, SetClause set) {
+            string setClause = set.ToString();
+            var whereClause = this.whereItemClause(command, item);
+
+            command.Parameters.AddRange(set.Parameters);
+            command.CommandText = $"UPDATE [{this.table}] {setClause} {whereClause};";
+
+            this.connection.Open();
+
+            try {
+                command.ExecuteNonQuery();
+
+                item.Valid = true;
+                item.ErrorMessage = null;
+            } catch (SqlException ex) {
+                item.Valid = false;
+                item.ErrorMessage = ex.Message;
+                Debug.WriteLine(ex, "DataList.Update");
             }
 
             this.connection.Close();
