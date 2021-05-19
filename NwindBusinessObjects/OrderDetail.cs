@@ -12,7 +12,7 @@ namespace NwindBusinessObjects {
         private short quantity;  // null-able:	NO
         private float discount;	// null-able:	NO
 
-        public OrderDetail(int orderID, int productID) : base(orderID.ToString(), productID.ToString()) {
+        public OrderDetail(int orderID, int productID) : base() {
             this.orderID = orderID;
             this.productID = productID;
         }
@@ -25,7 +25,6 @@ namespace NwindBusinessObjects {
             }
 
             set {
-                base.id = value.ToString();
                 this.orderID = value;
             }
         }
@@ -36,7 +35,6 @@ namespace NwindBusinessObjects {
             }
 
             set {
-                base.joinId = value.ToString();
                 this.productID = value;
             }
         }
@@ -70,5 +68,11 @@ namespace NwindBusinessObjects {
                 this.discount = value;
             }
         }
+
+        public override object GetId() => this.orderID;
+        public override void SetId(object id) => this.OrderID = (int) id;
+
+        public override object GetJoinId() => this.productID;
+        public override void SetJoinId(object joinId) => this.ProductID = (int) joinId;
     }
 }

@@ -1,14 +1,19 @@
 ﻿
 namespace NwindBusinessObjects {
     public abstract class ItemJoin : Item {
-        protected string joinId;
-
-        public ItemJoin(string id, string joinId) : base(id) {
-            this.joinId = joinId;
-        }
 
         public ItemJoin() : base() { }
 
-        public string JoinId => this.joinId;
+        /// <summary>
+        /// Get the join id value of this model
+        /// </summary>
+        /// <returns>Join id value</returns>
+        public abstract object GetJoinId();
+
+        /// <summary>
+        /// Set the join id value of this model
+        /// </summary>
+        /// <param name="id">New join id</param>
+        public abstract void SetJoinId(object joinId);
     }
 }

@@ -24,7 +24,7 @@ namespace NwindBusinessObjects {
         private string shipPostalCode;
         private string shipCountry;
 
-        public Order(int orderID) : base(orderID.ToString()) {
+        public Order(int orderID) : base() {
             this.orderID = orderID;
         }
 
@@ -36,7 +36,6 @@ namespace NwindBusinessObjects {
             }
 
             set {
-                base.id = value.ToString();
                 this.orderID = value;
             }
         }
@@ -170,5 +169,8 @@ namespace NwindBusinessObjects {
                 this.shipCountry = value;
             }
         }
+
+        public override object GetId() => this.orderID;
+        public override void SetId(object id) => this.OrderID = (int) id;
     }
 }

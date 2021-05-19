@@ -28,7 +28,7 @@ namespace NwindBusinessObjects {
         private int? reportsTo;
         private string photoPath;
 
-        public Employee(int employeeID) : base(employeeID.ToString()) {
+        public Employee(int employeeID) : base() {
             this.employeeID = employeeID;
         }
 
@@ -40,7 +40,6 @@ namespace NwindBusinessObjects {
             }
 
             set {
-                base.id = value.ToString();
                 this.employeeID = value;
             }
         }
@@ -214,5 +213,8 @@ namespace NwindBusinessObjects {
                 this.photoPath = value;
             }
         }
+
+        public override object GetId() => this.employeeID;
+        public override void SetId(object id) => this.EmployeeID = (int) id;
     }
 }
