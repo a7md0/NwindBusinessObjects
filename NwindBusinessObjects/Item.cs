@@ -1,39 +1,42 @@
 ﻿
 namespace NwindBusinessObjects {
     public abstract class Item {
-        protected string id;
+        /// <summary>
+        /// If this model has any previous errors
+        /// </summary>
+        public bool Valid { get; protected internal set; }
 
-        private bool valid;
-        private string errorMessage;
+        /// <summary>
+        /// Latest errors with this model
+        /// </summary>
+        public string ErrorMessage { get; protected internal set; }
 
-        public Item(string id) {
-            this.id = id;
-        }
+        /// <summary>
+        /// Property which indicate whether this item is already inserted in the database.
+        /// </summary>
+        public bool Inserted { get; protected internal set; } = false;
 
         public Item() { }
 
-        public string Id => this.id;
+        /// <summary>
+        /// Get the id value of this model
+        /// </summary>
+        /// <returns>Id value</returns>
+        public abstract object GetId();
 
-        public bool Valid {
-            get {
-                return this.valid;
-            }
+        /// <summary>
+        /// Set the id value of this model
+        /// </summary>
+        /// <param name="id">New id</param>
+        public abstract void SetId(object id);
 
-            set {
-                this.valid = value;
-            }
+        /// <summary>
+        /// Set error message for this model
+        /// </summary>
+        /// <param name="message">The error message or null</param>
+        protected internal void SetError(string message) {
+            this.Valid = message == null ? true : false;
+            this.ErrorMessage = message;
         }
-
-        public string ErrorMessage {
-            get {
-                return this.errorMessage;
-            }
-
-            set {
-                this.errorMessage = value;
-            }
-        }
-
-        public string getID() => this.id;
     }
 }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace NwindBusinessObjects.Schema {
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false)]
-    class TableAttribute : Attribute {
+    public class TableAttribute : Attribute {
         /// <summary>
         /// Initializes a new instance of the TableAttribute.
         /// </summary>

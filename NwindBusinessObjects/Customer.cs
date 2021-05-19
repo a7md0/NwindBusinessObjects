@@ -21,7 +21,7 @@ namespace NwindBusinessObjects {
         private string phone;
         private string fax;
 
-        public Customer(string customerID) : base(customerID) {
+        public Customer(string customerID) : base() {
             this.customerID = customerID;
         }
 
@@ -31,7 +31,6 @@ namespace NwindBusinessObjects {
             get { return this.customerID; }
             set {
                 this.customerID = value;
-                base.id = value;
             }
         }
 
@@ -84,5 +83,8 @@ namespace NwindBusinessObjects {
             get { return fax; }
             set { fax = value; }
         }
+
+        public override object GetId() => this.customerID;
+        public override void SetId(object id) => this.CustomerID = (string) id;
     }
 }

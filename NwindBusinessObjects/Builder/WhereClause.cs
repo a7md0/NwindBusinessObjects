@@ -1,13 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 using System.Data.SqlClient;
 
 namespace NwindBusinessObjects.Builder {
+    using Schema;
+
     public class WhereClause : IDisposable {
         private List<Predicate> predicates;
         private List<SqlParameter> parameters;
+
+        private TableSchema schema = null;
 
         public WhereClause() {
             this.predicates = new List<Predicate>();
@@ -16,93 +21,120 @@ namespace NwindBusinessObjects.Builder {
             this.predicates.Add(new AndPredicate());
         }
 
+        public WhereClause(TableSchema schema) : this() {
+            this.schema = schema;
+        }
+
         public SqlParameter[] Parameters => this.parameters.ToArray();
+        public bool HasAny => this.parameters.Count > 0 || this.predicates[0].Predicates.Count > 0;
 
-        #region Operators
-        public WhereClause AndWhere(string columnName, dynamic value) => this.AndWhere(columnName, WhereOpreators.EqualTo, value);
-        public WhereClause AndWhere(string columnName, WhereOpreators @operator, dynamic value) {
-            var last = predicates.Last();
-            var whereOpreator = this.whereOpreatorToSymbol(@operator);
-
-            parameters.Add(new SqlParameter(columnName, value));
-            last.Predicates.Add($"{columnName} {whereOpreator} @{columnName}");
+        public WhereClause Or() {
+            predicates.Add(new OrPredicate());
 
             return this;
         }
 
-        public WhereClause OrWhere(string columnName, dynamic value) => this.OrWhere(columnName, WhereOpreators.EqualTo, value);
-        public WhereClause OrWhere(string columnName, WhereOpreators @operator, dynamic value) {
-            predicates.Add(new OrPredicate());
+        #region Operators
+        public WhereClause Where(string columnName, object value) => this.Where(columnName, WhereOpreators.EqualTo, value);
+        public WhereClause Where(string columnName, WhereOpreators @operator, object value) {
+            this.checkColumnName(columnName);
 
-            return this.AndWhere(columnName, @operator, value);
+            var last = this.predicates.Last();
+            var whereOpreator = this.whereOpreatorToSymbol(@operator);
+
+            this.parameters.Add(new SqlParameter(columnName, value));
+            last.Predicates.Add($"[{columnName}] {whereOpreator} @{columnName}");
+
+            return this;
         }
 
-        public WhereClause AndWhereBetween(string columnName, IComparable minValue, IComparable maxValue, bool not = false) {
-            var last = predicates.Last();
+        public WhereClause WhereBetween(string columnName, IComparable minValue, IComparable maxValue, bool equal = true) {
+            this.checkColumnName(columnName);
 
-            string prefix = not == true ? "NOT " : "";
+            var last = this.predicates.Last();
+
+            string prefix = equal == false ? "NOT " : "";
             string minPlaceholder = $"Min{columnName}";
             string maxPlaceholder = $"Max{columnName}";
 
-            parameters.Add(new SqlParameter(minPlaceholder, minValue));
-            parameters.Add(new SqlParameter(maxPlaceholder, maxValue));
-            last.Predicates.Add($"{prefix}{columnName} BETWEEN @{minPlaceholder} AND @{maxPlaceholder}");
+            this.parameters.Add(new SqlParameter(minPlaceholder, minValue));
+            this.parameters.Add(new SqlParameter(maxPlaceholder, maxValue));
+            last.Predicates.Add($"{prefix}[{columnName}] BETWEEN @{minPlaceholder} AND @{maxPlaceholder}");
 
             return this;
         }
 
-        public WhereClause OrWhereBetween(string columnName, IComparable minValue, IComparable maxValue, bool not = false) {
-            predicates.Add(new OrPredicate());
+        public WhereClause WhereIs(string columnName, bool? value, bool equal = true) {
+            this.checkColumnName(columnName);
 
-            return this.AndWhereBetween(columnName, minValue, maxValue, not);
-        }
+            var last = this.predicates.Last();
 
-        public WhereClause AndWhereIs(string columnName, bool value, bool not = false) {
-            var last = predicates.Last();
+            string prefix = equal == false ? "NOT " : "";
+            string strValue = value.HasValue ? (value == true ? "TRUE" : "FALSE") : "NULL";
 
-            string prefix = not == true ? "NOT " : "";
-            string strValue = value == true ? "TRUE" : "FALSE";
-
-            parameters.Add(new SqlParameter(columnName, value));
-            last.Predicates.Add($"{columnName} IS {prefix}{strValue}");
+            last.Predicates.Add($"[{columnName}] IS {prefix}{strValue}");
 
             return this;
         }
 
-        public WhereClause OrWhereIs(string columnName, bool value, bool not = false) {
-            predicates.Add(new OrPredicate());
+        public WhereClause WhereDate(string columnName, DateTime value) => this.WhereDate(columnName, WhereOpreators.EqualTo, value);
+        public WhereClause WhereDate(string columnName, WhereOpreators @operator, DateTime value) {
+            this.checkColumnName(columnName);
 
-            return this.AndWhereBetween(columnName, value, not);
-        }
+            var last = this.predicates.Last();
+            var whereOpreator = this.whereOpreatorToSymbol(@operator);
 
-        public WhereClause Like(string columnName, dynamic value, bool not = false) {
-            throw new NotImplementedException();
+            if (@operator == WhereOpreators.EqualTo) {
+                string minPlaceholder = $"Min{columnName}";
+                string maxPlaceholder = $"Max{columnName}";
 
-#pragma warning disable CS0162 // Unreachable code detected
-            var last = predicates.Last();
+                this.parameters.Add(new SqlParameter(minPlaceholder, value.Date));
+                this.parameters.Add(new SqlParameter(maxPlaceholder, value.Date.AddDays(1)));
 
-            string prefix = not == true ? "NOT " : "";
+                last.Predicates.Add($"[{columnName}] >= @{minPlaceholder}");
+                last.Predicates.Add($"[{columnName}] < @{maxPlaceholder}");
+            } else {
+                this.parameters.Add(new SqlParameter(columnName, value.Date));
+                last.Predicates.Add($"[{columnName}] {whereOpreator} @{columnName}");
+            }
 
-            parameters.Add(new SqlParameter(columnName, value));
-            last.Predicates.Add($"{prefix}{columnName} LIKE @{columnName}");
-
-            return this;
-#pragma warning restore CS0162 // Unreachable code detected
-        }
-
-        public WhereClause In(string columnName, dynamic value, bool not = false) {
-            throw new NotImplementedException();
-#pragma warning disable CS0162 // Unreachable code detected
-            var last = predicates.Last();
-
-            string prefix = not == true ? "NOT " : "";
-            //string fValues = "";
-
-            parameters.Add(new SqlParameter(columnName, value));
-            last.Predicates.Add($"{prefix}{columnName} LIKE @{columnName}");
+            // last.Predicates.Add($"CAST([{columnName}] as date) {whereOpreator} CAST(@{columnName} as date)");
 
             return this;
-#pragma warning restore CS0162 // Unreachable code detected
+        }
+
+        public WhereClause WhereLike(string columnName, string like, bool equal = true) {
+            var last = this.predicates.Last();
+
+            string prefix = equal == false ? "NOT " : "";
+
+            this.parameters.Add(new SqlParameter(columnName, like));
+            last.Predicates.Add($"{prefix}[{columnName}] LIKE @{columnName}");
+
+            return this;
+        }
+
+        public WhereClause WhereIn(string columnName, object[] values, bool equal = true) {
+            this.checkColumnName(columnName);
+
+            var last = this.predicates.Last();
+
+            string prefix = equal == false ? "NOT " : "";
+            var list = new List<string>();
+
+            for (int i = 0; i < values.Length; i++) {
+                var value = values[i];
+                var placeholder = $"{columnName}Val{i}";
+
+                this.parameters.Add(new SqlParameter(placeholder, value));
+                list.Add($"@{placeholder}");
+            }
+
+            var joinedList = string.Join(", ", list);
+
+            last.Predicates.Add($"[{columnName}] {prefix}IN ({joinedList})");
+
+            return this;
         }
         #endregion Operators
 
@@ -125,22 +157,52 @@ namespace NwindBusinessObjects.Builder {
             return null;
         }
 
-        public override string ToString() {
-            string clause = "";
-            bool isFirst = true;
+        /// <summary>
+        /// Validate column name if possible
+        /// </summary>
+        /// <param name="columnName">Column name to check</param>
+        /// <exception cref="ArgumentOutOfRangeException">Invalid column name</exception>
+        private void checkColumnName(string columnName) {
+            if (this.schema is null == false && !this.schema.HasColumn(columnName)) {
+                throw new ArgumentOutOfRangeException(columnName, "This column does not exist in the table schema.");
+            }
+        }
+
+        public override string ToString() => this.ToString();
+        public string ToString(string columnPrefix = null) {
+            StringBuilder clause = new StringBuilder(); // New string builder
 
             foreach (var predicate in this.predicates) {
-                string op = predicate is AndPredicate ? " AND " : " OR ";
-                if (isFirst) {
-                    op = "WHERE ";
-                    isFirst = false;
+                var predicates = predicate.Predicates;
+                if (columnPrefix is null == false) {
+                    predicates = predicates.Select(p => p.Insert(p.IndexOf('['), $"{columnPrefix}.")).ToList();
                 }
 
-                clause += op + string.Join(" AND ", predicate.Predicates);
+                if (predicates.Count > 0) { // If there's items in the predicates
+                    if (clause.Length > 0) { // If the clause already have something appended
+                        clause.Append($" {predicate.ToString()} "); // Append the operator (either an AND or OR based on the current predicate)
+                    }
+
+                    clause.Append(string.Join(" AND ", predicates)); // Append the predicates joined with AND
+                }
             }
 
-            return clause;
+            return clause.ToString(); // Return the string from StringBuilder
         }
+
+        #region Clone-able Support
+        protected WhereClause(WhereClause another) {
+            this.predicates = new List<Predicate>(another.predicates);
+            this.parameters = new List<SqlParameter>(another.parameters);
+            this.schema = another.schema;
+        }
+
+        /// <summary>
+        /// Shallow clone the object.
+        /// </summary>
+        /// <returns>Shallow clone of the current object</returns>
+        public WhereClause Clone() => new WhereClause(this);
+        #endregion
 
         #region IDisposable Support
         private bool disposedValue = false; // To detect redundant calls
@@ -188,6 +250,14 @@ namespace NwindBusinessObjects.Builder {
 
         public List<string> Predicates => this.predicates;
 
+        #region Clone-able Support
+        protected Predicate(Predicate another) {
+            this.predicates = new List<string>(another.predicates);
+        }
+
+        public abstract Predicate Clone();
+        #endregion
+
         #region IDisposable Support
         private bool disposedValue = false; // To detect redundant calls
 
@@ -224,10 +294,30 @@ namespace NwindBusinessObjects.Builder {
 
     class AndPredicate : Predicate {
         public AndPredicate() : base() { }
+
+        public override string ToString() {
+            return "AND";
+        }
+
+        #region Clone-able Support
+        protected AndPredicate(AndPredicate another) : base(another) { }
+
+        public override Predicate Clone() => new AndPredicate(this);
+        #endregion
     }
 
     class OrPredicate : Predicate {
         public OrPredicate() : base() { }
+
+        public override string ToString() {
+            return "OR";
+        }
+
+        #region Clone-able Support
+        protected OrPredicate(OrPredicate another) : base(another) { }
+
+        public override Predicate Clone() => new OrPredicate(this);
+        #endregion
     }
 
     public enum WhereOpreators {
