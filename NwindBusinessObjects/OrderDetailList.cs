@@ -2,13 +2,13 @@
     public class OrderDetailList : DataListJoin<OrderDetail> {
         public OrderDetailList() : base() { }
 
-        public override void Add(OrderDetail orderDetail) {
+        public override bool Add(OrderDetail orderDetail) {
             if (orderDetail.Quantity > 25) {
                 orderDetail.UnitPrice *= 0.9m;
                 orderDetail.Discount = 0.9f;
             }
 
-            base.Add(orderDetail);
+            return base.Add(orderDetail);
         }
     }
 }
