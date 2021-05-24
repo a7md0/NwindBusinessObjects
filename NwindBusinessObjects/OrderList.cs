@@ -13,6 +13,10 @@ namespace NwindBusinessObjects {
                 order.Freight *= 1.1m;
             }
 
+            if (!order.RequiredDate.HasValue) {
+                order.RequiredDate = order.OrderDate.Value.AddDays(4 * 7);
+            }
+
             return base.Add(order);
         }
     }
