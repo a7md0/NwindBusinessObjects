@@ -214,6 +214,10 @@ namespace NwindBusinessObjects {
             }
         }
 
+        public string FullName {
+            get => $"{this.firstName} {this.lastName}";
+        }
+
         public override object GetId() => this.employeeID;
         public override void SetId(object id) => this.EmployeeID = (int) id;
     }
