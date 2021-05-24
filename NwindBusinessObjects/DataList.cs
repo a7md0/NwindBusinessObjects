@@ -41,6 +41,7 @@ namespace NwindBusinessObjects {
             this.columnsOrdinals = new Dictionary<string, int>(); // Create dictionary to hold column ordinals (sorting order from the database table)
 
             this.nonUpdateableColumns[0] = this.pkColumn;
+            this.nonUpdateableColumns[1] = this.pkColumn;
 
             this.SetDataTableColumns(); // Prepare data table column from the model properties
             this.FetchTableSchema(); // Fetch table schema for later usage
