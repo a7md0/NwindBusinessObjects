@@ -64,6 +64,8 @@
     </Compile>
     <Compile Include="Schema\TableAttribute.cs" />
     <Compile Include="Schema\TableSchema.cs" />
+    <Compile Include="Shipper.cs" />
+    <Compile Include="ShipperList.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
